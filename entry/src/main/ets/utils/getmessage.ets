@@ -64,6 +64,11 @@ class contentdata{
       text:text,
       islove:false
     })
+    this.num++;
+  }
+  public init_message(){
+    this.data=[];
+    this.num=-1
   }
 }
 //对话历史类
@@ -82,7 +87,7 @@ class local_contentdata{
   }
 }
 //获取文本信息
-export  function  message(s:string,message_manage:contentdata):void{
+export  function  message(s:string,message_manage:contentdata){
   let httpRequest = http.createHttp();
   let access_token:string ='24.5bd3c0b6fee744bbe48984c291286dda.2592000.1735104200.282335-116382962';
   let url_a:string ="https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop/chat/completions_pro?access_token="+access_token;
@@ -116,26 +121,25 @@ export  function  message(s:string,message_manage:contentdata):void{
           //console.log('Response:123')
         }
       }
-      message_manage.num++;
     }
   )
 };
-export async function  voice_tomessage(filePath: string,message_manage:contentdata){
+export  function  voice_tomessage(filePath: string,message_manage:contentdata){
 
   let file = fs.openSync(filePath, fs.OpenMode.READ_WRITE);// 创建请求数据对象
   let stat = fs.statSync(filePath); // 获取文件状态
   let byteSize = stat.size;// 提取文件状态信息中的文件大小（字节数），赋值给byteSize变量
   let buf = new ArrayBuffer(stat.size);// 根据文件大小创建一个ArrayBuffer，用于存储读取的文件内容
   let num = fs.readSync(file.fd, buf);   // 读取文件
-  let d=new Uint8Array(buf.slice(0, num))//转换成Uint8Array
+  let d=new Uint8Array(buf.slice(0, num));//转换成Uint8Array
   let base64 = new  util.Base64Helper();// 实例化Base64Helper
   let data=base64.encodeSync(d);//base64编码,返回Uint8Array
-  let textDecoder = util.TextDecoder.create('utf-8', { ignoreBOM : true })
+  let textDecoder = util.TextDecoder.create('utf-8', { ignoreBOM : true });
   let retStr = textDecoder.decodeWithStream( data , {stream: false});   // 可以把Uint8Array转码成base64
 
   let httpRequest = http.createHttp();
-  let access_token:string ='24.cc5caec2f96e8c6788511feb13dc17f7.2592000.1735009730.282335-116371132'
-  let url_a:string ="https://vop.baidu.com/server_api"
+  let access_token:string ='24.cc5caec2f96e8c6788511feb13dc17f7.2592000.1735009730.282335-116371132';
+  let url_a:string ="https://vop.baidu.com/server_api";
   httpRequest.request(
     url_a,{
     method: http.RequestMethod.POST,
@@ -155,31 +159,23 @@ export async function  voice_tomessage(filePath: string,message_manage:contentda
   },
     (error,data)=>{
       if(error) {
-        console.log('网络错误')
-        message_manage.pushmessage('网络连接错误','user')
-        message_manage.num++;
+        console.log('网络错误');
+        message_manage.pushmessage('网络连接错误','user');
       }
       else{
         if(http.ResponseCode.OK==data.responseCode){
-          console.log('访问成功')
-          let data_voice:ResponData_voice=JSON.parse(data.result.toString())
-          message_manage.pushmessage(data_voice.result.toString(),'user')
-          message_manage.num++;
+          console.log('访问成功');
+          let data_voice:ResponData_voice=JSON.parse(data.result.toString());
+          message_manage.pushmessage(data_voice.result.toString(),'user');
           message(data_voice.result.toString(),message_manage);
-          console.log(data_voice.result)
-
+          console.log(data_voice.result);
         }
         else{
           message_manage.pushmessage('访问错误','user')
-          message_manage.num++;
-          console.log('访问错误')
-
+          console.log('访问错误');
         }
       }
     });
 }
 
-  export {content,contentdata,local_contentdata};
-
-
-
+export {content,contentdata,local_contentdata};

@@ -1,6 +1,7 @@
 {
   "src": [
     "pages/Index",
-    "pages/setting_page"
+    "pages/setting_page",
+    "pages/access_page"
   ]
 }

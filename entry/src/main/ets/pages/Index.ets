@@ -17,9 +17,10 @@ struct Index {
   @StorageProp("keyboardHeight")
   keyboardHeight: number = 0
   @State message_manage: contentdata = new contentdata();//信息管理类
-  @State local_message:local_contentdata=new local_contentdata();
+  @State page_init:boolean=true;//初始化页面
   @State input_message:string='';//输入栏输入信息
   @State show_voice: boolean = false//切换语音输入
+  @State sideBarVisible: boolean = false; // 控制侧边栏显示状态
   input_voi:AudioRecorderDemo=new AudioRecorderDemo();//录音模块类
   output_voi:AVPlayerDemo=new AVPlayerDemo();//播放模块类
   //创建访问控制模块对象。
@@ -31,19 +32,31 @@ struct Index {
     SideBarContainer(SideBarContainerType.Overlay) {
       // 侧边栏界面
       Column() {
-        Text(this.message_manage.num.toString())
-        .width("100%")
-        .fontSize(30)
-        .textAlign(TextAlign.Center);
-        Text(this.local_message.local_num.toString())
-          .width("100%")
-          .fontSize(30)
-          .textAlign(TextAlign.Center);
+        Column(){
+          Button(){
+            Row(){
+              Image($r('app.media.plus'))
+                .width(24)
+                .height(24)
+              Text('新对话')
+                .layoutWeight(1)
+                .height(24)
+            }
+          }.width('100%')
+          .height('10%')
+          .onClick(()=>{
+            this.page_init=true;
+            this.message_manage.init_message();
+            console.log('点击前： ',this.sideBarVisible)
+            this.sideBarVisible = false; // 点击隐藏侧边栏
+            console.log('点击后： ',this.sideBarVisible)
+          })
+        }.margin({top:`${this.topRectHeight}px`+50})
+
       }
       .backgroundColor("#aabbcc")
       //主界面
       Column() {
-
         //标题
         Row(){
           Text('原神机器人')
@@ -53,7 +66,7 @@ struct Index {
             .fontWeight(700)//字体粗细
             .layoutWeight(1)
             .margin({left:80})
-            //.backgroundColor(Color.Gray)
+          //.backgroundColor(Color.Gray)
 
           Button(){
             Image($r('app.media.gearshape'))
@@ -75,150 +88,162 @@ struct Index {
         .backgroundColor(Color.White)
         //.margin({ top: `${this.keyboardHeight}px` })
 
-        //内容界面
-        List() {
-          ForEach(this.message_manage.data, (item: content) => {
-            ListItem() {
-              Row() {
-              Text(item.text)
-                .fontColor(item.name == 'user' ? Color.White : Color.Black)
-                .backgroundColor(item.name == 'user' ? '#1866e4' : '#f4f4f4')
-                .borderRadius(10) //设置边框圆角
-                .fontWeight(FontWeight.Normal)
-                .fontSize(16)
-                .padding(10)
-              }
-              .width('100%')
-              .justifyContent(item.name == 'user' ?FlexAlign.End:FlexAlign.Start )
-            }
-            .margin({top:5,bottom:10})
-            //.borderWidth(2)
-            //.borderColor(Color.Gray)
-
-          });
+        if(this.page_init){
+          Text('Hello World')
+            .fontSize(50)
+            .fontWeight(FontWeight.Bold)
         }
-        .margin({left:15,right:15,top:10,bottom:15})
-        .layoutWeight(1)
+        else{
+          //内容界面
+          List() {
+            ForEach(this.message_manage.data, (item: content) => {
+              ListItem() {
+                Row() {
+                  Text(item.text)
+                    .fontColor(item.name == 'user' ? Color.White : Color.Black)
+                    .backgroundColor(item.name == 'user' ? '#1866e4' : '#f4f4f4')
+                    .borderRadius(10) //设置边框圆角
+                    .fontWeight(FontWeight.Normal)
+                    .fontSize(16)
+                    .padding(10)
+                }
+                .width('100%')
+                .justifyContent(item.name == 'user' ?FlexAlign.End:FlexAlign.Start )
+              }
+              .margin({top:5,bottom:10})
+              //.borderWidth(2)
+              //.borderColor(Color.Gray)
+
+            });
+          }
+          .margin({left:15,right:15,top:10,bottom:15})
+          .layoutWeight(1)
+        }
+
 
         //输入界面
-       Stack({alignContent:Alignment.End}) {
-         //默认输入框界面
-         if(this.show_voice==false){
-           //输入框
-           TextInput({ placeholder: "发消息...", text: this.input_message })
-             .opacity(1)
-             .fontSize(20)
-             .width('96%')
-             .height(55)
-             .margin({ left:'2%', right:'2%',bottom:5})
-             .padding({ left: 10, right: 80 })
-             .borderColor('#f4f4f4') //边框颜色
-             .borderWidth(2) //边框宽度
-             .backgroundColor(Color.White) //背景颜色
-             .onChange((value: string) => {
-               this.input_message = value;
-             })
-           //有文字时显示发送按钮
+        Stack({alignContent:Alignment.End}) {
+          //默认输入框界面
+          if(this.show_voice==false){
+            //输入框
+            TextInput({ placeholder: "发消息...", text: this.input_message })
+              .opacity(1)
+              .fontSize(20)
+              .width('96%')
+              .height(55)
+              .margin({ left:'2%', right:'2%',bottom:5})
+              .padding({ left: 10, right: 80 })
+              .borderColor('#f4f4f4') //边框颜色
+              .borderWidth(2) //边框宽度
+              .backgroundColor(Color.White) //背景颜色
+              .onChange((value: string) => {
+                this.input_message = value;
+              })
+            //有文字时显示发送按钮
 
-           if (this.input_message != ''&&this.show_voice==false) {
-             Button() {
-               Image($r('app.media.arrow_up_circle_fill'))
-                 .width('100%')
-                 .height('100%')
-                 .objectFit(ImageFit.Cover)
-             }
-             .height(40)
-             .width(40)
-             .backgroundColor(Color.Transparent)
-             .borderRadius(24) // 圆形按钮
-             .margin({ right: 20, bottom: 10 })
-             .onClick(() => {
-               if (this.input_message != '') {
-                 this.message_manage.pushmessage(this.input_message, 'user');
-                 this.message_manage.num++;
-                 message(this.input_message,this.message_manage);
-                 this.input_message = '';
-               }
-             })
-           }
-           else {
-             //切换语音输入按钮
-             Button(){
-               Image($r('app.media.mic'))
-                 .width('100%')
-                 .height('100%')
-                 .objectFit(ImageFit.Cover)
-             }
-             .height(40)
-             .width(40)
-             .backgroundColor(Color.Transparent)
-             .borderRadius(24) // 圆形按钮
-             .margin({ right: 20, bottom: 10 })
-             .onClick(()=>{
-               this.show_voice=true;
-             })
-           }
-         }
+            if (this.input_message != ''&&this.show_voice==false) {
+              Button() {
+                Image($r('app.media.arrow_up_circle_fill'))
+                  .width('100%')
+                  .height('100%')
+                  .objectFit(ImageFit.Cover)
+              }
+              .height(40)
+              .width(40)
+              .backgroundColor(Color.Transparent)
+              .borderRadius(24) // 圆形按钮
+              .margin({ right: 20, bottom: 10 })
+              .onClick(() => {
+                if (this.input_message != '') {
+                  this.message_manage.pushmessage(this.input_message, 'user');
+                  message(this.input_message,this.message_manage);
+                  this.input_message = '';
+                  if(this.page_init){
+                    this.page_init=false;
+                  }
+                }
+              })
+            }
+            else {
+              //切换语音输入按钮
+              Button(){
+                Image($r('app.media.mic'))
+                  .width('100%')
+                  .height('100%')
+                  .objectFit(ImageFit.Cover)
+              }
+              .height(40)
+              .width(40)
+              .backgroundColor(Color.Transparent)
+              .borderRadius(24) // 圆形按钮
+              .margin({ right: 20, bottom: 10 })
+              .onClick(()=>{
+                this.show_voice=true;
+              })
+            }
+          }
           //切换语音输入界面
-         else{
-           //语音输入按钮
-           Button('按住说话')
-           .fontSize(20)
-           .fontColor(Color.Black)
-             .fontWeight(FontWeight.Bold)
-           .width('96%')
-           .height(55)
-             .margin({ left:'2%', right:'2%', bottom:5 })
-           .borderColor('#f4f4f4') //边框颜色
-           .borderWidth(2) //边框宽度
-           .backgroundColor(Color.Transparent) //背景颜色
-           .onTouch(async  (event:TouchEvent)=>{
-             switch (event.type) {
-               case TouchType.Down:
-                 premission(this.atManager,this.context,"ohos.permission.MICROPHONE");
-                 await this.input_voi.startRecordingProcess(this.context);
-                 break;
-               case TouchType.Up:
-                 await this.input_voi.stopRecordingProcess();
-                 await voice_tomessage(`${this.context.filesDir}/test_audio.m4a`,this.message_manage)
-                 break;
-               default:
-                 break;
-             }
-           })
+          else{
+            //语音输入按钮
+            Button('按住说话')
+              .fontSize(20)
+              .fontColor(Color.Black)
+              .fontWeight(FontWeight.Bold)
+              .width('96%')
+              .height(55)
+              .margin({ left:'2%', right:'2%', bottom:5 })
+              .borderColor('#f4f4f4') //边框颜色
+              .borderWidth(2) //边框宽度
+              .backgroundColor(Color.Transparent) //背景颜色
+              .onTouch(async  (event:TouchEvent)=>{
+                switch (event.type) {
+                  case TouchType.Down:
+                    premission(this.atManager,this.context,"ohos.permission.MICROPHONE");
+                    await this.input_voi.startRecordingProcess(this.context);
+                    break;
+                  case TouchType.Up:
+                    await this.input_voi.stopRecordingProcess();
+                    voice_tomessage(`${this.context.filesDir}/test_audio.m4a`,this.message_manage)
+                    if(this.page_init){
+                      this.page_init=false;
+                    }
+                    break;
+                  default:
+                    break;
+                }
+              })
 
-           //切换为文字输入
-           Button(){
-             Image($r('app.media.input_mode'))
-               .width('100%')
-               .height('100%')
-               .objectFit(ImageFit.Cover)
-           }
-             .height(40)
-             .width(40)
-             .backgroundColor(Color.Transparent)
-             .margin({ right: 30 ,bottom:5})
-             .onClick(()=>{
-               this.show_voice=false;
-             })
-         }
-
-         }
-         .width('100%')
-         .height(60)
-       .margin({bottom:`${this.topRectHeight}px`})
-       .backgroundColor(Color.Transparent)
-       }
+            //切换为文字输入
+            Button(){
+              Image($r('app.media.input_mode'))
+                .width('100%')
+                .height('100%')
+                .objectFit(ImageFit.Cover)
+            }
+            .height(40)
+            .width(40)
+            .backgroundColor(Color.Transparent)
+            .margin({ right: 30 ,bottom:5})
+            .onClick(()=>{
+              this.show_voice=false;
+            })
+          }
+        }
+        .width('100%')
+        .height(60)
+        .margin({bottom:`${this.topRectHeight}px`})
+        .backgroundColor(Color.Transparent)
+      }
+      .justifyContent(FlexAlign.SpaceBetween)
     }
     .margin({top:`${this.topRectHeight}px`})
     .sideBarWidth('100%') // 侧边栏宽度
     .showControlButton(true) // 是否显示侧边栏按钮
-    .showSideBar(false) // 默认是否显示侧边栏
+    .showSideBar(this.sideBarVisible) // 根据状态显示或隐藏侧边栏
     .controlButton({
       top:px2vp(20),
       left:20
     })
     .height('100%');
-
   }
 }
