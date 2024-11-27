@@ -49,12 +49,12 @@ interface ResponData_voice {
 class contentdata{
   data:content[];//消息属性
   num:number;//消息数量
-  constructor( ){
-    this.data=[];
-    this.num=-1
+  constructor(data:content[]=[],num:number=-1){
+    this.data=data;
+    this.num=num;
   }
   //添加新消息
-  public pushmessage(text:string,user:string){
+  public pushmessage(text:string,user:string,local_message_mange:local_contentdata){
     if(text==''){
       console.log('傻鸟，别传空字符')
       return ;
@@ -73,7 +73,7 @@ class contentdata{
 }
 //对话历史类
 class local_contentdata{
-  local_data:local_content[];//历史对话记录
+  local_data:contentdata[];//历史对话记录
   local_num:number;//历史对话数量
   //构造函数
   constructor( ){
@@ -81,13 +81,25 @@ class local_contentdata{
     this.local_num=-1;
     console.log('local_num:'+this.local_num.toString())
   }
-  public pushmessage(message_manage:contentdata){
-    this.local_data.push({lodata:message_manage});
-    this.local_num++;
+  public pushmessage_manage(textmessage:string,user:string,message_nums:number){
+    if(message_nums==-1){
+      const message:contentdata=new contentdata([{name:user,text:textmessage,islove:false}],0);
+      this.local_data.push(message);
+      this.local_num++;
+    }
+    else{
+      this.local_data[this.local_num].data.push({
+        name:user,
+        text:textmessage,
+        islove:false
+      })
+      this.local_data[this.local_num].num++;
+    }
+
   }
 }
 //获取文本信息
-export  function  message(s:string,message_manage:contentdata){
+export  function  message(s:string,message_manage:contentdata,local_message_mange:local_contentdata){
   let httpRequest = http.createHttp();
   let access_token:string ='24.5bd3c0b6fee744bbe48984c291286dda.2592000.1735104200.282335-116382962';
   let url_a:string ="https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop/chat/completions_pro?access_token="+access_token;
@@ -107,24 +119,24 @@ export  function  message(s:string,message_manage:contentdata){
   },
     (error,data)=>{
       if(error) {
-        message_manage.pushmessage('网络错误','原神')
+        message_manage.pushmessage('网络错误','原神',local_message_mange)
         //console.log('666')
       }
       else{
         if(http.ResponseCode.OK==data.responseCode){
           let response: ResponseData = JSON.parse(data.result.toString());
-          message_manage.pushmessage(response.result,'原神')
+          message_manage.pushmessage(response.result,'原神',local_message_mange)
           //console.log('Response: ', response)
         }
         else{
-          message_manage.pushmessage('访问错误','原神')
+          message_manage.pushmessage('访问错误','原神',local_message_mange)
           //console.log('Response:123')
         }
       }
     }
   )
 };
-export  function  voice_tomessage(filePath: string,message_manage:contentdata){
+export  function  voice_tomessage(filePath: string,message_manage:contentdata,local_message_mange:local_contentdata,page_init:number){
 
   let file = fs.openSync(filePath, fs.OpenMode.READ_WRITE);// 创建请求数据对象
   let stat = fs.statSync(filePath); // 获取文件状态
@@ -160,18 +172,22 @@ export  function  voice_tomessage(filePath: string,message_manage:contentdata){
     (error,data)=>{
       if(error) {
         console.log('网络错误');
-        message_manage.pushmessage('网络连接错误','user');
+        message_manage.pushmessage('网络连接错误','user',local_message_mange);
+        local_message_mange.pushmessage_manage('网络连接错误','user',page_init?-1:0)
       }
       else{
         if(http.ResponseCode.OK==data.responseCode){
           console.log('访问成功');
           let data_voice:ResponData_voice=JSON.parse(data.result.toString());
-          message_manage.pushmessage(data_voice.result.toString(),'user');
-          message(data_voice.result.toString(),message_manage);
+          message_manage.pushmessage(data_voice.result.toString(),'user',local_message_mange);
+          local_message_mange.pushmessage_manage(data_voice.result.toString(),'user',page_init?-1:0)
+          message(data_voice.result.toString(),message_manage,local_message_mange);
+          local_message_mange.pushmessage_manage(message_manage.data[message_manage.num].text, '原神',page_init?-1:0);
           console.log(data_voice.result);
         }
         else{
-          message_manage.pushmessage('访问错误','user')
+          message_manage.pushmessage('访问错误','user',local_message_mange)
+          local_message_mange.pushmessage_manage('访问错误','user',page_init?-1:0)
           console.log('访问错误');
         }
       }

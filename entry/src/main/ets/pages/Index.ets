@@ -17,10 +17,12 @@ struct Index {
   @StorageProp("keyboardHeight")
   keyboardHeight: number = 0
   @State message_manage: contentdata = new contentdata();//信息管理类
+  @State local_message_mange:local_contentdata=new local_contentdata();
   @State page_init:boolean=true;//初始化页面
   @State input_message:string='';//输入栏输入信息
   @State show_voice: boolean = false//切换语音输入
   @State sideBarVisible: boolean = false; // 控制侧边栏显示状态
+  @State current_page:number=-1;//当前加载聊天记录
   input_voi:AudioRecorderDemo=new AudioRecorderDemo();//录音模块类
   output_voi:AVPlayerDemo=new AVPlayerDemo();//播放模块类
   //创建访问控制模块对象。
@@ -33,32 +35,127 @@ struct Index {
       // 侧边栏界面
       Column() {
         Column(){
+          //返回内容区按钮
+          Row(){
+            Button(){
+              Image($r('app.media.xmark'))
+                .height(40)
+            }
+            .width('10%')
+            .margin({right:20})
+            .backgroundColor(Color.Transparent)
+            .onClick(()=>{
+              this.sideBarVisible=false;
+            })
+          }
+          .width('100%')
+          .margin({bottom:10})
+          .justifyContent(FlexAlign.End)
+
+          //开始新对话
           Button(){
             Row(){
               Image($r('app.media.plus'))
-                .width(24)
-                .height(24)
+                .width(36)
+                .height(36)
+                .margin({right:5})
               Text('新对话')
                 .layoutWeight(1)
                 .height(24)
+                .fontSize(24)
+                .textAlign(TextAlign.Start)
+                .fontWeight(500)
             }
-          }.width('100%')
-          .height('10%')
+            .alignItems(VerticalAlign.Center)
+            .margin(20)
+          }
+          .width('100%')
+          .height('9%')
+          .backgroundColor(Color.Transparent)
           .onClick(()=>{
-            this.page_init=true;
-            this.message_manage.init_message();
-            console.log('点击前： ',this.sideBarVisible)
+            if(this.page_init==false){
+              this.page_init=true;
+             //this.local_message_mange.pushmessage(this.message_manage);
+              this.message_manage.init_message();
+            }
             this.sideBarVisible = false; // 点击隐藏侧边栏
-            console.log('点击后： ',this.sideBarVisible)
+            //console.log('点击后： ',this.sideBarVisible)
           })
-        }.margin({top:`${this.topRectHeight}px`+50})
+          Divider()
+            .strokeWidth(2)
+            .margin({top:15,bottom:5})
+          //历史对话提示区域
+          Row(){
+            Image($r('app.media.ellipsis_message'))
+              .width(36)
+              .height(36)
+              .margin({right:5})
+            Text('最近对话')
+              .layoutWeight(1)
+              .height(24)
+              .fontSize(24)
+              .textAlign(TextAlign.Start)
+              .fontWeight(500)
+            Image($r('app.media.chevron_down'))
+              .width(36)
+              .height(36)
+              .margin({right:5})
+          }
+          .alignItems(VerticalAlign.Center)
+          .justifyContent(FlexAlign.SpaceBetween)
+          .padding(20)
+          .height('9%')
+          .width('100%')
 
+          //历史对话记录
+          List(){
+            ForEach(this.local_message_mange.local_data,(text:contentdata)=>{
+              //每行历史对话显示格式
+              ListItem(){
+                Button(){
+                  Row(){
+                    Text(text.data[0].text)
+                      .fontSize(20)
+                      .fontWeight(500)
+                      .layoutWeight(1)
+                      .textAlign(TextAlign.Start)
+                      .textOverflow({overflow:TextOverflow.Ellipsis})
+                      .maxLines(1)
+                      .margin({left:20})
+                    Image($r('app.media.chevron_right'))
+                      .width(18)
+                      .margin({left:10,right:30})
+                  }
+                  .alignItems(VerticalAlign.Center)
+                }
+                .backgroundColor(Color.Transparent)
+                .margin({top:5,bottom:10})
+                .height('5%')
+                .width('100%')
+              }
+            })
+          }
+          .margin({top:5,bottom:10})
+        }
+        .padding(5)
+        .margin({left:5,right:5})
       }
-      .backgroundColor("#aabbcc")
+      .backgroundColor("#fcfcfc")
+
       //主界面
       Column() {
         //标题
         Row(){
+          Button(){
+            Image($r('app.media.square_grid_2x2'))
+              .height(40)
+          }
+          .width('10%')
+          .margin({left:10})
+          .backgroundColor(Color.Transparent)
+          .onClick(()=>{
+           this.sideBarVisible=true;
+          })
           Text('原神机器人')
             .height(50)
             .fontStyle(FontStyle.Italic)//斜体
@@ -83,9 +180,8 @@ struct Index {
         }
         .width('100%')
         .margin({top:`${this.keyboardHeight}px`})
-        .justifyContent(FlexAlign.Center)//水平居中
+        .justifyContent(FlexAlign.SpaceBetween)//水平居中
         .alignItems(VerticalAlign.Center) // 垂直居中
-        .backgroundColor(Color.White)
         //.margin({ top: `${this.keyboardHeight}px` })
 
         if(this.page_init){
@@ -155,12 +251,13 @@ struct Index {
               .margin({ right: 20, bottom: 10 })
               .onClick(() => {
                 if (this.input_message != '') {
-                  this.message_manage.pushmessage(this.input_message, 'user');
-                  message(this.input_message,this.message_manage);
-                  this.input_message = '';
+                  this.message_manage.pushmessage(this.input_message, 'user',this.local_message_mange);
+                  this.local_message_mange.pushmessage_manage(this.input_message, 'user',this.page_init?-1:0);
                   if(this.page_init){
                     this.page_init=false;
                   }
+                  message(this.input_message,this.message_manage,this.local_message_mange);
+                  this.input_message = '';
                 }
               })
             }
@@ -203,7 +300,7 @@ struct Index {
                     break;
                   case TouchType.Up:
                     await this.input_voi.stopRecordingProcess();
-                    voice_tomessage(`${this.context.filesDir}/test_audio.m4a`,this.message_manage)
+                    voice_tomessage(`${this.context.filesDir}/test_audio.m4a`,this.message_manage,this.local_message_mange,this.page_init?-1:0)
                     if(this.page_init){
                       this.page_init=false;
                     }
@@ -235,10 +332,12 @@ struct Index {
         .backgroundColor(Color.Transparent)
       }
       .justifyContent(FlexAlign.SpaceBetween)
+      .backgroundColor(this.sideBarVisible?'#9c9c9c':Color.White);
     }
     .margin({top:`${this.topRectHeight}px`})
     .sideBarWidth('100%') // 侧边栏宽度
-    .showControlButton(true) // 是否显示侧边栏按钮
+    .maxSideBarWidth('50%')
+    .showControlButton(false) // 是否显示侧边栏按钮
     .showSideBar(this.sideBarVisible) // 根据状态显示或隐藏侧边栏
     .controlButton({
       top:px2vp(20),
