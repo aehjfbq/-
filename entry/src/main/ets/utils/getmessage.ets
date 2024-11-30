@@ -53,90 +53,91 @@ class contentdata{
     this.data=data;
     this.num=num;
   }
+  destroy() {
+    this.destroy();
+  }
   //添加新消息
-  public pushmessage(text:string,user:string,local_message_mange:local_contentdata){
+  public pushmessage(text:string,user:string){
     if(text==''){
       console.log('傻鸟，别传空字符')
-      return ;
     }
-    this.data.push({
-      name:user,
-      text:text,
-      islove:false
-    })
-    this.num++;
-  }
-  public init_message(){
-    this.data=[];
-    this.num=-1
+    else{
+      this.data.push({
+        name:user,
+        text:text,
+        islove:false
+      })
+      this.num++;
+    }
   }
 }
 //对话历史类
 class local_contentdata{
   local_data:contentdata[];//历史对话记录
   local_num:number;//历史对话数量
+  current_pagenum:number;//当前访问页面消息数量
   //构造函数
   constructor( ){
     this.local_data=[];
     this.local_num=-1;
+    this.current_pagenum=-1;
     console.log('local_num:'+this.local_num.toString())
   }
-  public pushmessage_manage(textmessage:string,user:string,message_nums:number){
-    if(message_nums==-1){
-      const message:contentdata=new contentdata([{name:user,text:textmessage,islove:false}],0);
-      this.local_data.push(message);
-      this.local_num++;
-    }
-    else{
-      this.local_data[this.local_num].data.push({
+  public pushmessage_manage(textmessage:string,user:string,current_page:number){
+      this.local_data[current_page].data.push({
         name:user,
         text:textmessage,
         islove:false
       })
-      this.local_data[this.local_num].num++;
-    }
-
+    this.current_pagenum++;
+      this.local_data[current_page].num++;
   }
+
 }
 //获取文本信息
-export  function  message(s:string,message_manage:contentdata,local_message_mange:local_contentdata){
+export async function message(s: string): Promise<string> {
   let httpRequest = http.createHttp();
-  let access_token:string ='24.5bd3c0b6fee744bbe48984c291286dda.2592000.1735104200.282335-116382962';
-  let url_a:string ="https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop/chat/completions_pro?access_token="+access_token;
+  let access_token: string = '24.5bd3c0b6fee744bbe48984c291286dda.2592000.1735104200.282335-116382962';
+  let url_a: string = "https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop/chat/completions_pro?access_token=" + access_token;
+
   // 创建请求数据对象
   let requestData: RequestData = {
     messages: [
-      {role: "user", content: s}
+      { role: "user", content: s }
     ]
   };
-  httpRequest.request(
-    url_a,{
-    method: http.RequestMethod.POST,
-    // 设置请求头为 JSON 格式
-    header: {'Content-Type': 'application/json'},
-    // 将请求数据转换为字符串后发送
-    extraData: JSON.stringify(requestData)
-  },
-    (error,data)=>{
-      if(error) {
-        message_manage.pushmessage('网络错误','原神',local_message_mange)
-        //console.log('666')
-      }
-      else{
-        if(http.ResponseCode.OK==data.responseCode){
-          let response: ResponseData = JSON.parse(data.result.toString());
-          message_manage.pushmessage(response.result,'原神',local_message_mange)
-          //console.log('Response: ', response)
+  console.log('666');
+  // 使用 Promise 封装异步请求
+  return new Promise<string>((resolve) => {
+    httpRequest.request(
+      url_a, {
+      method: http.RequestMethod.POST,
+      // 设置请求头为 JSON 格式
+      header: { 'Content-Type': 'application/json' },
+      // 将请求数据转换为字符串后发送
+      extraData: JSON.stringify(requestData)
+    },
+      (error, data) => {
+        if (error) {
+          console.log('6');
+          resolve('网络错误');
+        } else {
+          if (http.ResponseCode.OK === data.responseCode) {
+            try {
+              let response: ResponseData = JSON.parse(data.result.toString());
+              resolve(response.result); // 成功时返回结果
+            } catch (e) {
+              resolve('结果解析错误');
+            }
+          } else {
+            resolve('访问错误');
+          }
         }
-        else{
-          message_manage.pushmessage('访问错误','原神',local_message_mange)
-          //console.log('Response:123')
-        }
       }
-    }
-  )
-};
-export  function  voice_tomessage(filePath: string,message_manage:contentdata,local_message_mange:local_contentdata,page_init:number){
+    );
+  })
+}
+export  async function  voice_tomessage(filePath: string):Promise<string>{
 
   let file = fs.openSync(filePath, fs.OpenMode.READ_WRITE);// 创建请求数据对象
   let stat = fs.statSync(filePath); // 获取文件状态
@@ -152,46 +153,48 @@ export  function  voice_tomessage(filePath: string,message_manage:contentdata,lo
   let httpRequest = http.createHttp();
   let access_token:string ='24.cc5caec2f96e8c6788511feb13dc17f7.2592000.1735009730.282335-116371132';
   let url_a:string ="https://vop.baidu.com/server_api";
-  httpRequest.request(
-    url_a,{
-    method: http.RequestMethod.POST,
-    // 设置请求头为 JSON 格式
-    header: {'Content-Type': 'application/json'},
-    // 将请求数据转换为字符串后发送
-    extraData: JSON.stringify({
-      "format":"m4a",
-      "rate":16000,
-      "dev_pid":1537,
-      "channel":1,
-      "token":access_token ,
-      "cuid":"baidu_workshop",
-      "len":byteSize,
-      "speech":retStr,
-    })
-  },
-    (error,data)=>{
-      if(error) {
-        console.log('网络错误');
-        message_manage.pushmessage('网络连接错误','user',local_message_mange);
-        local_message_mange.pushmessage_manage('网络连接错误','user',page_init?-1:0)
-      }
-      else{
-        if(http.ResponseCode.OK==data.responseCode){
-          console.log('访问成功');
-          let data_voice:ResponData_voice=JSON.parse(data.result.toString());
-          message_manage.pushmessage(data_voice.result.toString(),'user',local_message_mange);
-          local_message_mange.pushmessage_manage(data_voice.result.toString(),'user',page_init?-1:0)
-          message(data_voice.result.toString(),message_manage,local_message_mange);
-          local_message_mange.pushmessage_manage(message_manage.data[message_manage.num].text, '原神',page_init?-1:0);
-          console.log(data_voice.result);
+  return new Promise<string>((resolve) => {
+    httpRequest.request(
+      url_a,{
+      method: http.RequestMethod.POST,
+      // 设置请求头为 JSON 格式
+      header: {'Content-Type': 'application/json'},
+      // 将请求数据转换为字符串后发送
+      extraData: JSON.stringify({
+        "format":"m4a",
+        "rate":16000,
+        "dev_pid":1537,
+        "channel":1,
+        "token":access_token ,
+        "cuid":"baidu_workshop",
+        "len":byteSize,
+        "speech":retStr,
+      })
+    },
+      (error,data)=>{
+        if(error) {
+          resolve('网络错误')
+          console.log('网络错误');
         }
         else{
-          message_manage.pushmessage('访问错误','user',local_message_mange)
-          local_message_mange.pushmessage_manage('访问错误','user',page_init?-1:0)
-          console.log('访问错误');
+          if(http.ResponseCode.OK==data.responseCode){
+            try {
+              console.log('访问成功');
+              let data_voice:ResponData_voice=JSON.parse(data.result.toString());
+              resolve(data_voice.result)
+            }catch(e){
+              resolve('结果解析错误')
+            }
+          }
+          else{
+            resolve('访问错误')
+            console.log('访问错误');
+          }
         }
-      }
-    });
+      });
+  })
+
 }
+
 
 export {content,contentdata,local_contentdata};
