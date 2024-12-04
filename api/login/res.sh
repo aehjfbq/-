@@ -5,7 +5,7 @@ echo "Starting login service at $(date)"
 
 # 编译 C++ 文件
 echo "Compiling login.c++..."
-g++ -std=c++17  /var/www/html/api/login/login.c++ -o  /var/www/html/api/login/login.out -lfcgi -lmysqlclient -ljsoncpp -lhiredis -lredis++ -pthread
+g++ /var/www/html/api/login/login.c++ -o  /var/www/html/api/login/login.out -lfcgi -lmysqlclient -ljsoncpp -lhiredis -lredis++ -pthread -L/usr/local/lib -lredis++
 
 # 启动 FastCGI 服务
 echo "Starting spawn-fcgi..."
