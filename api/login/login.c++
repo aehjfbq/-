@@ -107,7 +107,7 @@ bool authenticate(const string& account, const string& password) {
         return true;  // 密码正确
     }
     responseData["status"] = 0;
-        responseData["message"]="Failed to password";
+    responseData["message"]="Failed to password";
     return false;  // 密码错误
 }
 
@@ -160,7 +160,10 @@ void parse_post_data(string postData) {
         responseData["status"] = 1;
         responseData["message"] = "Login successful";
         responseData["token"] = token;
-    } 
+    }
+    else{
+        responseData["token"] = "";
+    }
 }
 
 int main() {
