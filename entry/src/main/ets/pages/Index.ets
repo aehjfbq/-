@@ -20,10 +20,9 @@ struct Index {
   @State input_message:string='';//输入栏输入信息
   @State show_voice: boolean = false//切换语音输入
   @State sideBarVisible: boolean = false; // 控制侧边栏显示状态
-  @State current_page:number=0;//当前加载聊天记录
+  @State current_page:number=-1;//当前加载聊天记录
   @State show_local_message:boolean=true;//显示历史聊天页面
-  output_message:string='';//输出信息
-  inpput_voice:string='';//语言输入信息
+  output_mess:string='';
   input_voi:AudioRecorderDemo=new AudioRecorderDemo();//录音模块类
   output_voi:AVPlayerDemo=new AVPlayerDemo();//播放模块类
   //创建访问控制模块对象。
@@ -216,6 +215,7 @@ struct Index {
             ForEach(this.local_message_mange.local_data[this.current_page].data, (item: content) => {
               ListItem() {
                 Row() {
+
                   Text(item.text)
                     .fontColor(item.name == 'user' ? Color.White : Color.Black)
                     .backgroundColor(item.name == 'user' ? '#1866e4' : '#f4f4f4')
@@ -269,17 +269,15 @@ struct Index {
               .onClick(async () => {
                 if (this.input_message != '') {
                   if(this.page_init){
-                    const mes:contentdata=new contentdata([{name:'user',text:this.input_message,islove:false}],0);
-                    this.local_message_mange.local_data.push(mes);
-                    this.local_message_mange.local_num++;
+                    this.local_message_mange.pushmessage_manage(this.input_message, 'user',this.local_message_mange.local_num+1);
                     this.current_page=this.local_message_mange.local_num;
                     this.page_init=false;
                   }
-                  else{ this.local_message_mange.pushmessage_manage(this.input_message, 'user',this.current_page);}
-                  this.output_message= await message(this.input_message);
-                  this.local_message_mange.pushmessage_manage(this.output_message, '原神',this.current_page);
+                  else this.local_message_mange.pushmessage_manage(this.input_message, 'user',this.current_page);
+                  let tmp_mess:string=this.input_message;
                   this.input_message = '';
-                  this.output_message = '';
+                  const output_message= await message(tmp_mess);
+                  this.local_message_mange.pushmessage_manage(output_message, '原神',this.current_page);
                 }
               })
             }
@@ -320,21 +318,21 @@ struct Index {
                     premission(this.atManager,this.context,"ohos.permission.MICROPHONE");
                     await this.input_voi.startRecordingProcess(this.context);
                     break;
-                  case TouchType.Up:
+                  case TouchType.Up: {
                     await this.input_voi.stopRecordingProcess();
-                    this.inpput_voice=await voice_tomessage(`${this.context.filesDir}/test_audio.m4a`)
-                    if(this.page_init){
-                      const mes:contentdata=new contentdata([{name:'user',text:this.inpput_voice,islove:false}],0);
-                      this.local_message_mange.local_data.push(mes);
-                      this.local_message_mange.local_num++;
+                    const inpput_voice = await voice_tomessage(`${this.context.filesDir}/test_audio.m4a`);
+                    if (this.page_init) {
+                      this.local_message_mange.pushmessage_manage(inpput_voice.toString(), 'user',this.local_message_mange.local_num+1);
                       this.current_page=this.local_message_mange.local_num;
-                      this.page_init=false;
+                      this.page_init = false;
                     }
-                    else {this.local_message_mange.pushmessage_manage(this.inpput_voice, 'user',this.current_page);}
-                    this.output_message= await message(this.inpput_voice);
-                    this.local_message_mange.pushmessage_manage(this.output_message, '原神',this.current_page);
-                    this.output_message='';
+                    else {
+                       this.local_message_mange.pushmessage_manage(inpput_voice.toString(), 'user', this.current_page);
+                    }
+                    const output_message = await message(inpput_voice.toString());
+                    this.local_message_mange.pushmessage_manage(output_message, '原神', this.current_page);
                     break;
+                  }
                   default:
                     break;
                 }

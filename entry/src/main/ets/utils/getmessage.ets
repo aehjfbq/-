@@ -84,17 +84,25 @@ class local_contentdata{
     console.log('local_num:'+this.local_num.toString())
   }
   public pushmessage_manage(textmessage:string,user:string,current_page:number){
-      this.local_data[current_page].data.push({
-        name:user,
-        text:textmessage,
-        islove:false
-      })
+    // 确保当前页面已初始化，如果未初始化则创建一个新的页面对象
+    console.log("mess:"+textmessage);
+    if (current_page>this.local_num) {
+      this.local_data.push( new contentdata() );
+      this.local_num++;
+      this.current_pagenum=-1;
+    }
+    this.local_data[current_page].data.push({
+      name:user,
+      text:textmessage,
+      islove:false
+    })
     this.current_pagenum++;
-      this.local_data[current_page].num++;
+    this.local_data[current_page].num++;
   }
 
 }
 //获取文本信息
+//异步函数返回的promise类型，用const进行接收！！！
 export async function message(s: string): Promise<string> {
   let httpRequest = http.createHttp();
   let access_token: string = '24.5bd3c0b6fee744bbe48984c291286dda.2592000.1735104200.282335-116382962';
@@ -106,7 +114,6 @@ export async function message(s: string): Promise<string> {
       { role: "user", content: s }
     ]
   };
-  console.log('666');
   // 使用 Promise 封装异步请求
   return new Promise<string>((resolve) => {
     httpRequest.request(
@@ -119,12 +126,12 @@ export async function message(s: string): Promise<string> {
     },
       (error, data) => {
         if (error) {
-          console.log('6');
           resolve('网络错误');
         } else {
           if (http.ResponseCode.OK === data.responseCode) {
             try {
               let response: ResponseData = JSON.parse(data.result.toString());
+              console.log('response.result'+response.result);
               resolve(response.result); // 成功时返回结果
             } catch (e) {
               resolve('结果解析错误');
@@ -173,7 +180,7 @@ export  async function  voice_tomessage(filePath: string):Promise<string>{
     },
       (error,data)=>{
         if(error) {
-          resolve('网络错误')
+          resolve('网络错误1')
           console.log('网络错误');
         }
         else{
@@ -187,7 +194,7 @@ export  async function  voice_tomessage(filePath: string):Promise<string>{
             }
           }
           else{
-            resolve('访问错误')
+            resolve('访问错误2')
             console.log('访问错误');
           }
         }

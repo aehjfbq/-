@@ -2,6 +2,8 @@
   "src": [
     "pages/Index",
     "pages/setting_page",
-    "pages/access_page"
+    "pages/access_page",
+    "pages/login",
+    "pages/register"
   ]
 }

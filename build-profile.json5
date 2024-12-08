@@ -6,9 +6,9 @@
         "type": "HarmonyOS",
         "material": {
           "certpath": "C:\\Users\\MEC\\.ohos\\config\\auto_debug_MyApplication69_com.example.myapplication69_30086000716276213.cer",
-          "storePassword": "0000001BB006386993AEB0166E83330ECC93667B4A7599CDD24EA9CD4A3FF5DA3205622B47D2F4A1AFD126",
+          "storePassword": "0000001B6002AF21B8EEA980B7FEE31E03AC95233DBBB387D0CFB8289F4DDC96A3BAEBB0B6CEFD5E603F20",
           "keyAlias": "debugKey",
-          "keyPassword": "0000001BE0C008964D6DF75E2583E9E799CA58338DC0E210BD743608B1D49F481FCD255FBA77A1D02F4D5A",
+          "keyPassword": "0000001BF0EEAFB067D3FA5C8F771101D933CB73F9F597697CE92A6ABAE1F879E8393461ACAA6B3DF79876",
           "profile": "C:\\Users\\MEC\\.ohos\\config\\auto_debug_MyApplication69_com.example.myapplication69_30086000716276213.p7b",
           "signAlg": "SHA256withECDSA",
           "storeFile": "C:\\Users\\MEC\\.ohos\\config\\auto_debug_MyApplication69_com.example.myapplication69_30086000716276213.p12"
